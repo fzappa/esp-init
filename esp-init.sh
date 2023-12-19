@@ -31,6 +31,10 @@ set_target() {
 
     # Change to the project directory and set the target
     pushd $PROJECT_DIR
+    
+    # Load the environment
+    source ~/esp/esp-idf/export.sh
+    
     idf.py set-target $TARGET
     popd
 }
@@ -41,6 +45,13 @@ create_project() {
     TARGET=${2:-esp32}  # Set ESP32 as default if no target is specified
     PROJECT_DIR=$WORKDIR/$PROJECT_NAME
 
+    # Check if IDF_PATH exists
+    if [ ! -d "$IDF_PATH" ]; then
+        echo "Error: IDF_PATH directory does not exist. Please set up IDF_PATH correctly."
+        exit 1
+    fi
+
+    # Check if PROJECT_DIR exists
     if [ -d "$PROJECT_DIR" ]; then
         echo "A project with this name already exists."
         exit 1
@@ -56,12 +67,10 @@ create_project() {
         # Set the chip architecture
         set_target $PROJECT_DIR $TARGET
         
-        # Load the environment
-        source ~/esp/esp-idf/export.sh
-
         echo "Run 'cd $PROJECT_DIR' to change to the project directory."
     fi
 }
+
 
 # Function to display help
 display_help() {
