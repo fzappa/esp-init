@@ -58,6 +58,8 @@ create_project() {
         
         # Load the environment
         source ~/esp/esp-idf/export.sh
+
+        echo "Run 'cd $PROJECT_DIR' to change to the project directory."
     fi
 }
 
