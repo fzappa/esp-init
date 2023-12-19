@@ -19,7 +19,7 @@ This bash script simplifies the process of setting up new projects using the Esp
 ## Usage
 
 ```bash
-./script_name.sh [OPTION]
+./esp-init.sh [OPTION]
 ```
 
 ### Options
@@ -46,7 +46,7 @@ This bash script simplifies the process of setting up new projects using the Esp
 1. Clone or download this script to your local machine.
 2. Give execute permission to the script:
    ```bash
-   chmod +x script_name.sh
+   chmod +x esp-init.sh
    ```
 3. Run the script with desired options.
 
