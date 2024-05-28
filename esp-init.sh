@@ -4,6 +4,20 @@
 WORKDIR=~/esp/esp-projects
 IDF_PATH=~/esp/esp-idf
 
+# Function to check if Git is installed
+check_git() {
+    if ! command -v git &>/dev/null; then
+        echo "Git is not installed. Please install Git and try again."
+        exit 1
+    fi
+}
+
+# Function to install dependencies
+install_dependencies() {
+    sudo apt-get update
+    sudo apt-get install -y git wget flex bison gperf python3 python3-pip python3-venv cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
+}
+
 # Function to clone ESP-IDF
 clone_idf() {
     if [ ! -d "$IDF_PATH" ]; then
@@ -12,6 +26,15 @@ clone_idf() {
     else
         echo "ESP-IDF is already cloned."
     fi
+}
+
+# Function to set up the tools for specified architectures
+setup_tools() {
+    ARCHITECTURES=${1:-esp32} # Set ESP32 as default if no architectures are specified
+
+    pushd $IDF_PATH
+    ./install.sh $ARCHITECTURES
+    popd
 }
 
 # Function to update CMakeLists.txt
@@ -31,10 +54,10 @@ set_target() {
 
     # Change to the project directory and set the target
     pushd $PROJECT_DIR
-    
+
     # Load the environment
     source ~/esp/esp-idf/export.sh
-    
+
     idf.py set-target $TARGET
     popd
 }
@@ -42,7 +65,7 @@ set_target() {
 # Function to create a new project
 create_project() {
     PROJECT_NAME=$1
-    TARGET=${2:-esp32}  # Set ESP32 as default if no target is specified
+    TARGET=${2:-esp32} # Set ESP32 as default if no target is specified
     PROJECT_DIR=$WORKDIR/$PROJECT_NAME
 
     # Check if IDF_PATH exists
@@ -66,23 +89,37 @@ create_project() {
 
         # Set the chip architecture
         set_target $PROJECT_DIR $TARGET
-        
+
         echo "Run 'cd $PROJECT_DIR' to change to the project directory."
     fi
 }
-
 
 # Function to display help
 display_help() {
     echo "Usage: $0 [OPTION]"
     echo "Options:"
-    echo "  --clone                 Clone the ESP-IDF repository."
-    echo "  --new [project_name] [architecture]" 
+    echo "  --clone [architectures] Clone the ESP-IDF repository and set up the tools for the specified architectures (default: esp32)."
+    echo "                          Architectures should be separated by commas (e.g., esp32,esp32s3)."
+    echo "  --new [project_name] [architecture]"
     echo "                                       Create a new project with the"
-    echo "                                      specified name and architecture" 
-    echo "                                      (Default: esp32)."
-    echo "esp32|esp32s2|esp32c3|esp32s3|esp32c2|esp32c6|esp32h2|linux|esp32p4|esp32c5"
+    echo "                                       specified name and architecture"
+    echo "                                       (Default: esp32)."
+    echo "                                       Available architectures: esp32, esp32s2, esp32c3, esp32s3, esp32c2, esp32c6, esp32h2, linux, esp32p4, esp32c5."
+    echo "  --install-deps          Install necessary dependencies on Ubuntu."
     echo "  --help                  Display this help message."
+    echo ""
+    echo "Examples:"
+    echo "  Clone ESP-IDF and set up tools for esp32:"
+    echo "    $0 --clone"
+    echo ""
+    echo "  Clone ESP-IDF and set up tools for esp32 and esp32s3:"
+    echo "    $0 --clone esp32,esp32s3"
+    echo ""
+    echo "  Create a new project named 'my_project' for esp32:"
+    echo "    $0 --new my_project esp32"
+    echo ""
+    echo "  Install necessary dependencies:"
+    echo "    $0 --install-deps"
 }
 
 # Check command line arguments
@@ -91,23 +128,34 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+# Check if Git is installed
+check_git
+
 case "$1" in
-    --clone)
-        clone_idf
-        ;;
-    --new)
-        if [ $# -lt 2 ]; then
-            echo "Error: Project name not specified."
-            exit 1
-        fi
-        create_project "$2" "$3"
-        ;;
-    --help)
-        display_help
-        ;;
-    *)
-        echo "Invalid option: $1"
-        display_help
+--clone)
+    clone_idf
+    if [ -n "$2" ]; then
+        setup_tools "$2"
+    else
+        setup_tools
+    fi
+    ;;
+--new)
+    if [ $# -lt 2 ]; then
+        echo "Error: Project name not specified."
         exit 1
-        ;;
+    fi
+    create_project "$2" "$3"
+    ;;
+--install-deps)
+    install_dependencies
+    ;;
+--help)
+    display_help
+    ;;
+*)
+    echo "Invalid option: $1"
+    display_help
+    exit 1
+    ;;
 esac
