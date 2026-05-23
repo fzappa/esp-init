@@ -503,7 +503,11 @@ choose_targets_interactive() {
 
 setup_tools() {
   local targets_arg="$1"
-  info "Running install.sh ($targets_arg)..."
+  local py_path py_ver
+  py_path="$(command -v python3)"
+  py_ver="$("$py_path" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+
+  info "Running install.sh ($targets_arg) with $py_path (Python $py_ver)..."
   pushd "$IDF_PATH" >/dev/null
   if [[ "$targets_arg" == "all" ]]; then
     ./install.sh all
@@ -512,8 +516,20 @@ setup_tools() {
     ./install.sh ${targets_arg//,/ }
   fi
   popd >/dev/null
-  info "Toolchains installed. Activate the environment:"
-  echo "  source $IDF_PATH/export.sh"
+
+  {
+    echo ""
+    info "Install finished. Python virtualenv is tied to Python $py_ver"
+    echo "  Expected venv: ~/.espressif/python_env/idf*_py${py_ver//./}_env"
+    echo ""
+    echo "Activate ESP-IDF (use the SAME python3 as above):"
+    echo "  conda deactivate    # if you use conda"
+    echo "  which python3 && python3 --version"
+    echo "  source $IDF_PATH/export.sh"
+    echo ""
+    echo "If export.sh looks for py3.14_env but install used py3.12, deactivate conda"
+    echo "or open a new shell without Python 3.14 on PATH."
+  } >&2
 }
 
 run_setup() {
@@ -539,8 +555,6 @@ run_setup() {
 
   echo ""
   info "ESP-IDF $tag is ready."
-  echo "  source $IDF_PATH/export.sh"
-  echo "  cd ~/esp/esp-projects/my_app && idf.py build"
 }
 
 # ---------------------------------------------------------------------------
